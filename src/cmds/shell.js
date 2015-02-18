@@ -79,8 +79,10 @@ class Cmd extends InteractiveCmds {
           return false;
         };
 
+        var shell_progress = this._escapeAndPullProgress(escape, system, !opts.silent);
+
         system.runShell(cmd, options).
-          progress(Helpers.escapeCapture(escape)).
+          progress(shell_progress).
           then(resolver, reject);
       });
 
@@ -102,10 +104,32 @@ class Cmd extends InteractiveCmds {
       this.fail("commands.shell.ended.docker_end");
       return { code: 127 };
     } else if (error.code === 'ECONNREFUSED') {
-      this.fail("commands.shell.ended.docker_notfound");
+      this.fail("commands.shell.ended.docker_not_found");
       return { code: 127 };
     }
     throw error;
+  }
+
+  _escapeAndPullProgress(escape, system, show_logs) {
+    return (event) => {
+      var pull_progress = Helpers.newPullProgress(this);
+      var escape_progress = Helpers.escapeCapture(escape);
+
+      if (event.type === "stdin_pipe") {
+        escape_progress(event);
+      } else if (show_logs) {
+        if (show_logs && event.type === "pull_msg") {
+          pull_progress(event);
+        } else if (event.type === "action") {
+          var keys = ["commands", "scale"];
+
+          if (event.action == "pull_image") {
+            var data = { image: system.image.name };
+            this.ok([...keys].concat(event.action), data);
+          }
+        }
+      }
+    };
   }
 
   _parse_option(option, regex, split, fail, format = null) {
@@ -136,6 +160,7 @@ export function init(cli) {
     .addOption(['--mount', '-m'], { type: String, acc: true, default: [] })
     .addOption(['--env', '-e'], { type: String, acc: true, default: [] })
     .addOption(['--verbose', '-v'])
+    .addOption(['--silent'])
     .addExamples(t("commands.shell.examples"))
   ;
 }
