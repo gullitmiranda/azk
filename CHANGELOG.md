@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## dev
 
 * Bug
-  - [Parse] Fixing running azk command in subfolder using dockfile, issue #250.
+  - [Parse] Fixing running azk command in subfolders using dockerfile, and specifying a Dockerfile that doesn't exist. Issues #250 #302.
 
 * Enhancements
   * [code] Adding support to "integration testing"

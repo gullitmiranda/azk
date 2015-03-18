@@ -78,7 +78,7 @@ describe("Azk image class", function() {
         h.expect(img).to.have.property("name").and.match(/suggest/);
       });
 
-      it('should raise exception if Dockerfile not exists', function () {
+      it('should raise exception if Dockerfile does not exist', function () {
         var dockerfile = path.join(manifest_path, "empty");
         var func = () => new Image({ provider: "dockerfile", path: dockerfile, system });
 
@@ -89,7 +89,7 @@ describe("Azk image class", function() {
         h.expect(func).to.throw(ManifestError, msg_regex);
       });
 
-      it('should raise exception if path not exist', function () {
+      it('should raise exception if path does not exist', function () {
         var dockerfile = path.join(manifest_path, 'notfound');
         var func = () => new Image({ provider: "dockerfile", path: dockerfile, system });
 
