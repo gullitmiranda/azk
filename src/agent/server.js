@@ -131,7 +131,7 @@ var Server = {
   },
 
   runCommand(commands, system, options = {}) {
-    options = _.merge({}, options, { remove: true });
+    options = _.merge({}, options, { remove: true, valid_mounts: false });
     system  = system || this._getSystem("base");
 
     return system.runShell(commands, options);

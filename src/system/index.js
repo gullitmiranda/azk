@@ -412,9 +412,10 @@ export class System {
     });
 
     var type   = daemon ? "daemon" : "shell";
+    var valid_mounts = options.valid_mounts;
     var mounts = _.merge(
-      {}, this.Mounts.volumes(this.options.mounts || {}, daemon),
-      this.Mounts.volumes(options.mounts, daemon)
+      {}, this.Mounts.volumes(this.options.mounts || {}, daemon, valid_mounts),
+      this.Mounts.volumes(options.mounts, daemon, valid_mounts)
     );
 
     var dns_servers = [];

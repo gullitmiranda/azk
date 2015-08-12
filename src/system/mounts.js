@@ -29,7 +29,7 @@ export class Mounts {
   }
 
   /* Volumes */
-  _to_volume(mount, daemon) {
+  _to_volume(mount, daemon, valid_mounts) {
     if (_.isString(mount)) {
       mount = { type: 'path', target: mount };
     } else {
@@ -44,15 +44,15 @@ export class Mounts {
           target = this._resolved_path(target);
         }
         mount.base = target;
-        target = this._host_resolve(target);
+        target = this._host_resolve(target, valid_mounts);
 
         break;
       case 'persistent':
         // persistent folder
         var persist_base = config('paths:persistent_folders');
         persist_base = path.join(persist_base, this.manifest.namespace);
-        mount.base = target;
         target = path.join(persist_base, target);
+        mount.base = target;
         break;
 
       case 'sync':
@@ -64,7 +64,7 @@ export class Mounts {
             target = this._resolved_path(target);
           }
           mount.base = target;
-          target = this._host_resolve(target);
+          target = this._host_resolve(target, valid_mounts);
         }
         break;
     }
@@ -72,20 +72,20 @@ export class Mounts {
     return mount;
   }
 
-  _host_resolve(target) {
+  _host_resolve(target, valid_mounts = true) {
     if (fs.existsSync(target)) {
       target = utils.docker.resolvePath(target);
     } else {
-      target = null;
+      target = valid_mounts ? null : target;
     }
     return target;
   }
 
-  volumes(mounts, daemon = true) {
+  volumes(mounts, daemon = true, valid_mounts = true) {
     var volumes = {};
 
     return _.reduce(mounts, (volumes, mount, point) => {
-      var target = this._to_volume(mount, daemon).target;
+      var target = this._to_volume(mount, daemon, valid_mounts).target;
       if (!_.isEmpty(target)) {
         volumes[point] = target;
       }
