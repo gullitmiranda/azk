@@ -1,4 +1,4 @@
-import { _, config, log, fs, utils, lazy_require, path } from 'azk';
+import { _, config, fs, utils, lazy_require, path } from 'azk';
 import { publish } from 'azk/utils/postal';
 import { promiseResolve, thenAll } from 'azk/utils/promises';
 
@@ -67,19 +67,22 @@ export class Mounts {
     return mount;
   }
 
+  _host_resolve(target) {
+    if (fs.existsSync(target)) {
+      target = utils.docker.resolvePath(target);
+    } else {
+      target = null;
+    }
+    return target;
+  }
+
   volumes(mounts, daemon = true) {
     var volumes = {};
 
     return _.reduce(mounts, (volumes, mount, point) => {
       var target = this._to_volume(mount, daemon).target;
-
       if (_.include(["path", "sync"], mount.type)) {
-        if (fs.existsSync(target)) {
-          target = utils.docker.resolvePath(target);
-        } else {
-          log.warn('[mounts] path does not exist:', target);
-          target = null;
-        }
+        target = this._host_resolve(target);
       }
 
       if (!_.isEmpty(target)) {
@@ -159,9 +162,13 @@ export class Mounts {
     var manifest = new lazy.Manifest(config('paths:shared'), true);
     var system = manifest.system("base", true);
 
+    var base_path   = this._resolved_path();
+    var output_path = utils.docker.resolvePath(base_path);
+
     var persist_base = config('paths:persistent_folders');
     system.options.mounts = system.options.mounts || {};
     system.options.mounts[persist_base] = persist_base;
+    system.options.mounts[base_path   ] = output_path;
 
     var command = ["curl", "-sS", "-o", output, url];
     return lazy.Server.runCommand(command, system);
