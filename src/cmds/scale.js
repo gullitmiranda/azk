@@ -6,8 +6,9 @@ import { async } from 'azk/utils/promises';
 import { AzkError } from 'azk/utils/errors';
 
 var lazy = lazy_require({
-  Manifest: ['azk/manifest'],
-  Status  : 'azk/cmds/status'
+  Manifest  : ['azk/manifest'],
+  Status    : 'azk/cmds/status',
+  GetProject: ['azk/manifest/get_project'],
 });
 
 class Scale extends CliTrackerController {
@@ -116,9 +117,11 @@ class Scale extends CliTrackerController {
             log.debug({ log_label: "[scale]", data: event});
             break;
           case "remote_mounts":
-            if (event.system === system.name) {
+            flags.mounts = flags.mounts || {};
+            if (event.system === system.name && !flags.mounts[event.filename]) {
+              flags.mounts[event.filename] = true;
               this.ui.ok([...keys].concat(event.type), event);
-              log.debug("[mounts][remote] get remote files", event);
+              log.debug({ log_label: "[scale]", data: event});
             }
             break;
           case "wait_port" :

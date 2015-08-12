@@ -419,7 +419,6 @@ module.exports = {
     scale: {
       instances    : "from "     + "%(from)d".red                + " to " + "%(to)d".green + " instances",
       sync         : "⎘".yellow  + " syncing files for `"        + "%(system)s".blue       + "` system...",
-      remote_mounts: "↡".yellow  + " getting remote files for `" + "%(system)s".blue       + "` system...",
       wait_port    : "◴".magenta + " waiting for `"              + "%(system)s".blue       + "` system to start, trying connection to port %(name)s/%(protocol)s...",
       check_image  : "✓".cyan    + " checking `"                 + "%(image)s".yellow      + "` image...",
       pull_image   : "⇲".blue    + " downloading `"              + "%(image)s".yellow      + "` image...",
@@ -429,6 +428,7 @@ module.exports = {
       stopping     : "↓".red     + " stopping `"                 + "%(system)s".blue       + "` system, " + "%(from)d".red + " instances...",
       scaling_up   : "↑".green   + " scaling `"                  + "%(system)s".blue       + "` system %(instances)s...",
       scaling_down : "↓".red     + " scaling `"                  + "%(system)s".blue       + "` system %(instances)s...",
+      remote_mounts: "↡".yellow  + " getting file `" + "%(filename)s".blue + "` for `" + "%(system)s".blue + "` system...",
     },
     status: {
       status          : "%(system)s: %(instances)d instances - %(hosts)s",

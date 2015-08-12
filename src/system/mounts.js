@@ -1,4 +1,4 @@
-import { _, config, fs, utils, lazy_require, path } from 'azk';
+import { _, config, log, fs, utils, lazy_require, path } from 'azk';
 import { publish } from 'azk/utils/postal';
 import { promiseResolve, thenAll } from 'azk/utils/promises';
 
@@ -35,7 +35,6 @@ export class Mounts {
     } else {
       mount = _.clone(mount);
       mount.target = mount.value;
-      delete(mount.value);
     }
     var target = mount.target;
 
@@ -134,15 +133,13 @@ export class Mounts {
   }
 
   getRemotes(options = {}) {
-    var topic   = "system.mounts.get_remote.status";
-    var promise = promiseResolve();
     var mounts  = this.system.remote_mounts || {};
+    var topic   = "system.mounts.get_remote.status";
 
     var publish_data = {
       type  : "remote_mounts",
       system: this.system.name,
     };
-    publish(topic, _.merge(publish_data, { mounts: mounts }));
 
     return thenAll(_.map(mounts, (mount_data) => {
       var promise = promiseResolve();
@@ -152,8 +149,15 @@ export class Mounts {
       // Download external file
       if (force || !fs.existsSync(target)) {
         var origin = mount_data.options.from;
-        var publish_data_extra = _.merge(publish_data, { type: "get_remote", origin: origin, target: target });
-        publish(topic, publish_data_extra);
+
+        publish(topic, _.merge(publish_data, {
+          origin  : origin,
+          target  : target,
+          filename: mount_data.value,
+          mount   : mount_data
+        }));
+        log.debug('[mounts][get_file] download %s => %s', origin, target);
+
         promise = this._getRemote(origin, target);
       }
       return promise;
