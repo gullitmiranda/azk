@@ -24,7 +24,7 @@ export class Mounts {
 
   _sync_path(mount_path) {
     var sync_base_path = config('paths:sync_folders');
-    sync_base_path = path.join(sync_base_path, this.manifest.namespace, this.name);
+    sync_base_path = path.join(sync_base_path, this.manifest.namespace, this.system.name);
     return path.join(sync_base_path, this._resolved_path(mount_path));
   }
 
@@ -44,11 +44,15 @@ export class Mounts {
         if (!target.match(/^\//)) {
           target = this._resolved_path(target);
         }
+        mount.base = target;
+        target = this._host_resolve(target);
+
         break;
       case 'persistent':
         // persistent folder
         var persist_base = config('paths:persistent_folders');
         persist_base = path.join(persist_base, this.manifest.namespace);
+        mount.base = target;
         target = path.join(persist_base, target);
         break;
 
@@ -60,6 +64,8 @@ export class Mounts {
           if (!target.match(/^\//)) {
             target = this._resolved_path(target);
           }
+          mount.base = target;
+          target = this._host_resolve(target);
         }
         break;
     }
@@ -81,10 +87,6 @@ export class Mounts {
 
     return _.reduce(mounts, (volumes, mount, point) => {
       var target = this._to_volume(mount, daemon).target;
-      if (_.include(["path", "sync"], mount.type)) {
-        target = this._host_resolve(target);
-      }
-
       if (!_.isEmpty(target)) {
         volumes[point] = target;
       }
@@ -98,7 +100,6 @@ export class Mounts {
 
     return _.reduce(mounts, (syncs, mount, mount_key) => {
       if (mount.type === 'sync') {
-
         var host_sync_path = this._resolved_path(mount.value);
 
         var mounted_subpaths = _.reduce(mounts, (subpaths, mount, dir) => {
@@ -144,8 +145,9 @@ export class Mounts {
     publish(topic, _.merge(publish_data, { mounts: mounts }));
 
     return thenAll(_.map(mounts, (mount_data) => {
-      var target = mount_data.target;
-      var force  = (options.provision_force || options.build_force);
+      var promise = promiseResolve();
+      var target  = mount_data.base;
+      var force   = (options.provision_force || options.build_force);
 
       // Download external file
       if (force || !fs.existsSync(target)) {
@@ -162,13 +164,12 @@ export class Mounts {
     var manifest = new lazy.Manifest(config('paths:shared'), true);
     var system = manifest.system("base", true);
 
-    var base_path   = this._resolved_path();
-    var output_path = utils.docker.resolvePath(base_path);
+    var base_path = path.dirname(output);
 
     var persist_base = config('paths:persistent_folders');
     system.options.mounts = system.options.mounts || {};
     system.options.mounts[persist_base] = persist_base;
-    system.options.mounts[base_path   ] = output_path;
+    system.options.mounts[base_path   ] = base_path;
 
     var command = ["curl", "-sS", "-o", output, url];
     return lazy.Server.runCommand(command, system);
