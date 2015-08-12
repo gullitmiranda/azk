@@ -115,6 +115,12 @@ class Scale extends CliTrackerController {
             }
             log.debug({ log_label: "[scale]", data: event});
             break;
+          case "mounts":
+            if (event.system === system.name) {
+              this.ui.ok([...keys].concat(event.type), event);
+              log.debug("[mounts] get external files", { data: event });
+            }
+            break;
           case "wait_port" :
           case "provision" :
             this.ui.ok([...keys].concat(event.type), event);

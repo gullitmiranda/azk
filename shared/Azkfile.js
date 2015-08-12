@@ -8,6 +8,12 @@ var _         = require('azk')._;
 
 // Default options for all systems
 systems({
+  'base': {
+    image: { docker: config("docker:image_base") },
+    wait    : false,
+    scalable: false,
+  },
+
   'azktcl-base': {
     image   : { docker: config("docker:image_default") },
     shell   : '/bin/bash',

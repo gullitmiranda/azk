@@ -7,6 +7,7 @@ var lazy = lazy_require({
   Run      : ['azk/system/run'],
   Scale    : ['azk/system/scale'],
   Balancer : ['azk/system/balancer'],
+  Mounts   : ['azk/system/mounts'],
 });
 
 var XRegExp = require('xregexp').XRegExp;
@@ -32,6 +33,7 @@ export class System {
 
     this.options   = _.merge({}, this.default_options, options);
     this.options   = this._expand_template(this.options);
+    this.Mounts    = new lazy.Mounts(this);
   }
 
   get image_name_suggest() {
@@ -280,11 +282,15 @@ export class System {
 
   // Mounts options
   get mounts() {
-    return this._mounts_to_volumes(this.options.mounts || {});
+    return this.Mounts.volumes(this.options.mounts || {});
   }
 
   get syncs() {
-    return this._mounts_to_syncs(this.options.mounts || {});
+    return this.Mounts.syncs(this.options.mounts || {});
+  }
+
+  get remote_mounts() {
+    return this.Mounts.remotes(this.options.mounts || {});
   }
 
   // Get depends info
@@ -407,8 +413,8 @@ export class System {
 
     var type   = daemon ? "daemon" : "shell";
     var mounts = _.merge(
-      {}, this._mounts_to_volumes(this.options.mounts || {}, daemon),
-      this._mounts_to_volumes(options.mounts, daemon)
+      {}, this.Mounts.volumes(this.options.mounts || {}, daemon),
+      this.Mounts.volumes(options.mounts, daemon)
     );
 
     var dns_servers = [];
@@ -519,102 +525,5 @@ export class System {
   _replace_keep_keys(template) {
     var regex = /(?:(?:[#|$]{|<%)[=|-]?)\s*((?:envs|net)\.[\S]+?)\s*(?:}|%>)/g;
     return template.replace(regex, "#{_keep_key('$1')}");
-  }
-
-  _resolved_path(mount_path) {
-    if (!mount_path) {
-      return this.manifest.manifestPath;
-    }
-    return path.resolve(this.manifest.manifestPath, mount_path);
-  }
-
-  _sync_path(mount_path) {
-    var sync_base_path = config('paths:sync_folders');
-    sync_base_path = path.join(sync_base_path, this.manifest.namespace, this.name);
-    return path.join(sync_base_path, this._resolved_path(mount_path));
-  }
-
-  _mounts_to_volumes(mounts, daemon = true) {
-    var volumes = {};
-
-    // persistent folder
-    var persist_base = config('paths:persistent_folders');
-    persist_base = path.join(persist_base, this.manifest.namespace);
-
-    return _.reduce(mounts, (volumes, mount, point) => {
-      if (_.isString(mount)) {
-        mount = { type: 'path', value: mount };
-      }
-
-      var target = null;
-      switch (mount.type) {
-        case 'path':
-          target = mount.value;
-
-          if (!target.match(/^\//)) {
-            target = this._resolved_path(target);
-          }
-
-          target = (fs.existsSync(target)) ?
-            utils.docker.resolvePath(target) : null;
-
-          break;
-        case 'persistent':
-          target = path.join(persist_base, mount.value);
-          break;
-
-        case 'sync':
-          if (daemon && mount.options.daemon !== false ||
-             !daemon && mount.options.shell === true) {
-            target = this._sync_path(mount.value);
-          } else {
-            target = mount.value;
-
-            if (!target.match(/^\//)) {
-              target = this._resolved_path(target);
-            }
-
-            target = (fs.existsSync(target)) ?
-              utils.docker.resolvePath(target) : null;
-          }
-          break;
-      }
-
-      if (!_.isEmpty(target)) {
-        volumes[point] = target;
-      }
-
-      return volumes;
-    }, volumes);
-  }
-
-  _mounts_to_syncs(mounts) {
-    var syncs = {};
-
-    return _.reduce(mounts, (syncs, mount, mount_key) => {
-      if (mount.type === 'sync') {
-
-        var host_sync_path = this._resolved_path(mount.value);
-
-        var mounted_subpaths = _.reduce(mounts, (subpaths, mount, dir) => {
-          if ( dir !== mount_key && dir.indexOf(mount_key) === 0) {
-            var regex = new RegExp(`^${mount_key}`);
-            subpaths = subpaths.concat([path.normalize(dir.replace(regex, './'))]);
-          }
-          return subpaths;
-        }, []);
-
-        mount.options        = mount.options || {};
-        mount.options.except = _.uniq(_.flatten([mount.options.except || []])
-          .concat(mounted_subpaths)
-          .concat(['.syncignore', '.gitignore', '.azk/', '.git/', 'Azkfile.js']));
-
-        syncs[host_sync_path] = {
-          guest_folder: this._sync_path(mount.value),
-          options     : mount.options,
-        };
-      }
-      return syncs;
-    }, syncs);
   }
 }

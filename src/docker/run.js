@@ -71,6 +71,8 @@ export function run(docker, Container, image, cmd, opts = { }) {
     'AttachStderr': opts.stderr ? true : false,
     'Tty': opts.tty,
     'OpenStdin': interactive,
+    'Volumes': volumes,
+    'Binds': v_binds,
     'ExposedPorts': ports,
     'Env': env,
     'WorkingDir': opts.working_dir || "/",

@@ -1,4 +1,4 @@
-import { t, config, log, fsAsync } from 'azk';
+import { _, t, config, log, fsAsync, lazy_require } from 'azk';
 import { publish } from 'azk/utils/postal';
 import { async, promiseResolve } from 'azk/utils/promises';
 import { VM  }   from 'azk/agent/vm';
@@ -6,6 +6,12 @@ import { Balancer } from 'azk/agent/balancer';
 import { Api } from 'azk/agent/api';
 import { net } from 'azk/utils';
 import { VmStartError } from 'azk/utils/errors';
+
+var lazy = lazy_require({
+  Manifest    : ['azk/manifest'],
+  Tools       : ['azk/agent/tools'],
+  MemoryStream: 'memorystream',
+});
 
 var Server = {
   starting: false,
@@ -122,6 +128,18 @@ var Server = {
         yield VM.stop(vm_name, !this.vm_started);
       }
     });
+  },
+
+  runCommand(commands, system, options = {}) {
+    options = _.merge({}, options, { remove: true });
+    system  = system || this._getSystem("base");
+
+    return system.runShell(commands, options);
+  },
+
+  _getSystem(system) {
+    var manifest = new lazy.Manifest(config('paths:shared'), true);
+    return manifest.system(system, true);
   },
 
   _activeDockerMonitor(retry = 3) {

@@ -9,6 +9,7 @@ var lazy = lazy_require({
   MemoryStream: 'memorystream',
   docker      : ['azk/docker', 'default'],
   Client      : ['azk/agent/client'],
+  Mounts      : ['azk/system/mounts'],
 });
 
 var Run = {
@@ -68,6 +69,9 @@ var Run = {
       // Sync folders if set in mounts section at Azkfile.js
       yield system.runWatch(false, options.silent_sync);
 
+      // Get external mounts
+      yield system.Mounts.getRemotes(system, options);
+
       // Envs
       var deps_envs = yield system.checkDependsAndReturnEnvs(options, false);
       options.envs  = _.merge(deps_envs, options.envs || {});
@@ -110,6 +114,9 @@ var Run = {
 
       // Sync folders if set in mounts section at Azkfile.js
       yield system.runWatch(true);
+
+      // Get external mounts
+      yield system.Mounts.getRemotes(system, options);
 
       options = _.defaults(options, {
         sequencies: yield this._getSequencies(system),

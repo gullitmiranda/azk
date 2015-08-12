@@ -91,6 +91,7 @@ var options = mergeConfig({
       repository      : 'azk',
       default_domain  : 'azk',
       build_name      : 'azkbuild',
+      image_base      : 'azukiapp/alpine',
       image_default   : 'azukiapp/azktcl:0.0.2',
       remove_container: envs('AZK_REMOVE_CONTAINER', true),
       run: {
