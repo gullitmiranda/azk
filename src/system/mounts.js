@@ -130,18 +130,26 @@ export class Mounts {
   }
 
   getRemotes(options = {}) {
-    var topic   = "system.mounts.external.status";
+    var topic   = "system.mounts.get_remote.status";
     var promise = promiseResolve();
+    var mounts  = this.system.remote_mounts || {};
 
-    publish(topic, { type : "mounts", system : this.system.name });
+    var publish_data = {
+      type  : "remote_mounts",
+      system: this.system.name,
+    };
+    publish(topic, _.merge(publish_data, { mounts: mounts }));
 
-    return thenAll(_.map(this.system.remote_mounts || {}, (mount_data/*, mount_origin*/) => {
+    return thenAll(_.map(mounts, (mount_data) => {
       var target = mount_data.target;
       var force  = (options.provision_force || options.build_force);
 
       // Download external file
       if (force || !fs.existsSync(target)) {
-        promise = this._getRemote(mount_data.options.from, target, force);
+        var origin = mount_data.options.from;
+        var publish_data_extra = _.merge(publish_data, { type: "get_remote", origin: origin, target: target });
+        publish(topic, publish_data_extra);
+        promise = this._getRemote(origin, target);
       }
       return promise;
     }));

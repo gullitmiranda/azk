@@ -70,7 +70,7 @@ var Run = {
       yield system.runWatch(false, options.silent_sync);
 
       // Get external mounts
-      yield system.Mounts.getRemotes(system, options);
+      yield system.Mounts.getRemotes(options);
 
       // Envs
       var deps_envs = yield system.checkDependsAndReturnEnvs(options, false);
@@ -116,7 +116,7 @@ var Run = {
       yield system.runWatch(true);
 
       // Get external mounts
-      yield system.Mounts.getRemotes(system, options);
+      yield system.Mounts.getRemotes(options);
 
       options = _.defaults(options, {
         sequencies: yield this._getSequencies(system),
