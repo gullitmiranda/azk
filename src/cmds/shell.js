@@ -73,9 +73,11 @@ class Shell extends CliTrackerController {
 
       // Remove container before run
       var is_remove = !options['no-remove'] ? config("docker:remove_container") : !options['no-remove'];
+      var force     = (options.rebuild ? true : options.reprovision) || false;
       cmd_options = _.merge(cmd_options, {
         build_force    : options.rebuild || false,
-        provision_force: (options.rebuild ? true : options.reprovision) || false,
+        provision_force: force,
+        pull_remote    : force,
         remove         : is_remove,
       });
 

@@ -18,8 +18,8 @@ var Run = {
       var steps = system.provision_steps;
 
       options = _.defaults(options, {
-        provision_force: false,
-        build_force: false,
+        provision_force  : false,
+        build_force      : false,
         provision_verbose: false,
       });
 
@@ -70,6 +70,8 @@ var Run = {
       yield system.runWatch(false, options.silent_sync);
 
       // Get external mounts
+      system.pull_remote = options.pull_remote;
+      delete(options.pull_remote);
       yield system.Mounts.getRemotes(options);
 
       // Envs
@@ -109,14 +111,16 @@ var Run = {
       var image = yield this._check_image(system, options);
       options.image_data = image;
 
-      // Check provision
-      yield system.runProvision(options);
-
       // Sync folders if set in mounts section at Azkfile.js
       yield system.runWatch(true);
 
       // Get external mounts
+      system.pull_remote = options.pull_remote;
+      delete(options.pull_remote);
       yield system.Mounts.getRemotes(options);
+
+      // Check provision
+      yield system.runProvision(options);
 
       options = _.defaults(options, {
         sequencies: yield this._getSequencies(system),

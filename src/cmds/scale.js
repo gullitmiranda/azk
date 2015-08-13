@@ -135,9 +135,11 @@ class Scale extends CliTrackerController {
     });
 
     var is_remove = !opts['no-remove'] ? config("docker:remove_container") : !opts['no-remove'];
+    var force     = (opts.rebuild ? true : opts.reprovision) || false;
     var options = {
       build_force    : opts.rebuild || false,
-      provision_force: (opts.rebuild ? true : opts.reprovision) || false,
+      provision_force: force,
+      pull_remote    : force,
       remove         : is_remove,
     };
 

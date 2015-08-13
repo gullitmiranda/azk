@@ -54,6 +54,7 @@ var Scale = {
         for (var i = 0; i < icc; i++) {
           yield system.runDaemon(_.clone(options));
           options.provision_force = false;
+          options.pull_remote     = false;
         }
       } else if (icc < 0) {
         containers = containers.reverse().slice(0, Math.abs(icc));

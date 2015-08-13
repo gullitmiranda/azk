@@ -293,6 +293,15 @@ export class System {
     return this.Mounts.remotes(this.options.mounts || {});
   }
 
+  get pull_remote() {
+    return this._pull_remote || false;
+  }
+
+  set pull_remote(value) {
+    this._pull_remote = value;
+    return this._pull_remote;
+  }
+
   // Get depends info
   get depends() { return this.options.depends; }
   get dependsInstances() {

@@ -132,7 +132,11 @@ export class Mounts {
     }, {});
   }
 
-  getRemotes(options = {}) {
+  getRemotes() {
+    if (!this.system.pull_remote) {
+      return promiseResolve();
+    }
+
     var mounts  = this.system.remote_mounts || {};
     var topic   = "system.mounts.get_remote.status";
 
@@ -144,10 +148,9 @@ export class Mounts {
     return thenAll(_.map(mounts, (mount_data) => {
       var promise = promiseResolve();
       var target  = mount_data.base;
-      var force   = (options.provision_force || options.build_force);
 
       // Download external file
-      if (force || !fs.existsSync(target)) {
+      if (this.system.pull_remote || !fs.existsSync(target)) {
         var origin = mount_data.options.from;
 
         publish(topic, _.merge(publish_data, {
@@ -161,7 +164,10 @@ export class Mounts {
         promise = this._getRemote(origin, target);
       }
       return promise;
-    }));
+    }))
+    .then(() => {
+      this.system.pull_remote = false;
+    });
   }
 
   _getRemote(url, output) {
